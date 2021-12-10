@@ -1,0 +1,13 @@
+/.idea/
+# ignored files
+*.tfstate
+*.tfstate.backup
+.terraform
+.idea
+*.iml
+_example/.terraform.tfstate.lock.info
+backend.tf
+terraform.tfvars
+.terraform.lock.hcl
+.terraform
+/_example/.terraform/
