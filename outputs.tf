@@ -6,19 +6,10 @@ output "repository" {
   value       = join("", helm_release.karpenter.*.repository)
   description = "Repository URL where to locate the requested chart."
 }
-output "repository_key_file" {
-  value       = join("", helm_release.karpenter.*.repository_key_file)
-  description = "The repositories cert key file."
-}
-output "repository_cert_file" {
-  value       = join("", helm_release.karpenter.*.repository_cert_file)
-  description = "The repositories cert file."
-}
-output "repository_username" {
-  value       = join("", helm_release.karpenter.*.repository_username)
-  description = "Username for HTTP basic authentication against the repository."
-}
 output "version" {
   value       = join("", helm_release.karpenter.*.version)
   description = "Specify the exact chart version to install. If this is not specified, the latest version is installed."
+}
+output "tags" {
+  value = module.labels.tags
 }
