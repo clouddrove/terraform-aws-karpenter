@@ -1,5 +1,5 @@
 output "chart" {
-  value       = join("", helm_release.karpenter.*.chart)
+  value = join("", helm_release.karpenter.*.chart)
 }
 
 output "repository" {
