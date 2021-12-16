@@ -39,20 +39,20 @@ usage: |-
     ```hcl
       module "karpenter" {
 
-      source      = "clouddrove/karpenter/aws"
-      version     = "1.1.0"
-      name        = "karpenter"
-      environment = "test"
-      label_order = ["environment", "name"]
+          source      = "clouddrove/karpenter/aws"
+          version     = "1.1.0"
+          name        = "karpenter"
+          environment = "test"
+          label_order = ["environment", "name"]
 
-      namespace         = "test"
-      create_namespace  = true
-      karpenter_version = "0.5.2"
+          namespace         = "test"
+          create_namespace  = true
+          karpenter_version = "0.5.2"
 
-      cluster_name             = module.eks.eks_cluster_id
-      eks_cluster_endpoint     = module.eks.eks_cluster_endpoint
-      eks_worker_iam_role_name = module.eks.iam_role_name
-      provider_url             = module.eks.oidc_issuer_url
-      depends_on               = [module.eks]
-}
+          cluster_name             = module.eks.eks_cluster_id
+          eks_cluster_endpoint     = module.eks.eks_cluster_endpoint
+          eks_worker_iam_role_name = module.eks.iam_role_name
+          provider_url             = module.eks.oidc_issuer_url
+          depends_on               = [module.eks]
+        }
     ```
