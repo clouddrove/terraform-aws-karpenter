@@ -54,5 +54,5 @@ usage: |-
       eks_worker_iam_role_name = module.eks.iam_role_name
       provider_url             = module.eks.oidc_issuer_url
       depends_on               = [module.eks]
-}
+     }
     ```
