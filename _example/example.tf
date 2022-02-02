@@ -137,7 +137,7 @@ module "karpenter" {
 
   namespace         = "test"
   create_namespace  = true
-  karpenter_version = "0.5.1"
+  karpenter_version = "0.6.0"
 
   cluster_name             = module.eks.eks_cluster_id
   eks_cluster_endpoint     = module.eks.eks_cluster_endpoint
