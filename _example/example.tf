@@ -12,7 +12,7 @@ locals {
 
 module "vpc" {
   source  = "clouddrove/vpc/aws"
-  version = "0.15.0"
+  version = "1.3.0"
 
   name        = "vpc"
   environment = "test"
@@ -24,7 +24,7 @@ module "vpc" {
 
 module "subnets" {
   source  = "clouddrove/subnet/aws"
-  version = "0.15.0"
+  version = "1.3.0"
 
   name        = "subnets"
   environment = "test"
@@ -44,7 +44,7 @@ module "subnets" {
 
 module "eks" {
   source  = "clouddrove/eks/aws"
-  version = "0.15.1"
+  version = "0.15.2"
 
   ## Tags
   name        = "eks-karpenter"
