@@ -46,87 +46,82 @@ module "eks" {
   source  = "clouddrove/eks/aws"
   version = "12.7.1"
 
-  ## Tags
-  name        = "eks-karpenter"
+  name        = "karpenter-eks"
   environment = "test"
   label_order = ["environment", "name"]
   enabled     = true
 
-  ## Network
-  vpc_id                              = module.vpc.vpc_id
-  eks_subnet_ids                      = module.subnets.public_subnet_id
-  worker_subnet_ids                   = module.subnets.private_subnet_id
-  endpoint_private_access             = false
-  endpoint_public_access              = true
-  public_access_cidrs                 = ["0.0.0.0/0"]
-  cluster_encryption_config_resources = ["secrets"]
-  associate_public_ip_address         = false
-  ## volume_size
-  volume_size = 30
+  # EKS
+  kubernetes_version        = "1.25"
+  endpoint_private_access   = true
+  endpoint_public_access    = true
+  enabled_cluster_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+  oidc_provider_enabled     = true
+  # Networking
+  vpc_id                  = module.vpc.vpc_id
+  subnet_ids              = module.subnets.private_subnet_id
+  allowed_cidr_blocks     = ["10.0.0.0/16"]
 
-  ondemand_enabled      = false
-  spot_enabled          = false
-  spot_schedule_enabled = false
-
-
-  #node_group
-  node_group_enabled = true
-  node_groups = {
-    tools = {
-      node_group_name           = "autoscale"
-      subnet_ids                = module.subnets.private_subnet_id
-      ami_type                  = "AL2_x86_64"
-      node_group_volume_size    = 100
-      node_group_instance_types = ["t3.large"]
-      kubernetes_labels         = {}
-      kubernetes_version        = "1.21"
-      node_group_desired_size   = 1
-      node_group_max_size       = 1
-      node_group_min_size       = 1
-      node_group_capacity_type  = "ON_DEMAND"
-      node_group_volume_type    = "gp2"
-      node_group_taint_key      = "test"
-      node_group_taint_value    = "value"
-      node_group_taint_effect   = "NO_SCHEDULE"
-
+  ################################################################################
+  # AWS Managed Node Group
+  ################################################################################
+  # Node Groups Defaults Values It will Work all Node Groups
+  managed_node_group_defaults = {
+    subnet_ids                          = module.subnets.private_subnet_id
+    tags = {
+      Example = "test"
+    }
+    block_device_mappings = {
+      xvda = {
+        device_name = "/dev/xvda"
+        ebs = {
+          volume_size = 50
+          volume_type = "gp3"
+          iops        = 3000
+          throughput  = 150
+        }
+      }
     }
   }
+  managed_node_group = {
+    tools = {
+      min_size       = 1
+      max_size       = 7
+      desired_size   = 2
+      instance_types = ["t3a.medium"]
+    }
 
+    spot = {
+      name          = "spot"
+      capacity_type = "SPOT"
 
-  ## Cluster
-  wait_for_capacity_timeout = "15m"
-  apply_config_map_aws_auth = true
-  kubernetes_version        = "1.21"
-  oidc_provider_enabled     = true
-  ## Health Checks
-  cpu_utilization_high_threshold_percent = 80
-  cpu_utilization_low_threshold_percent  = 20
-  health_check_type                      = "EC2"
-}
-
-
-data "aws_eks_cluster" "cluster" {
-  name = module.eks.eks_cluster_id
-}
-
-data "aws_eks_cluster_auth" "cluster" {
-  name = module.eks.eks_cluster_id
-}
-
-provider "kubernetes" {
-  host                   = data.aws_eks_cluster.cluster.endpoint
-  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority[0].data)
-  token                  = data.aws_eks_cluster_auth.cluster.token
-}
-
-provider "helm" {
-  kubernetes {
-    host                   = data.aws_eks_cluster.cluster.endpoint
-    cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority[0].data)
-    token                  = data.aws_eks_cluster_auth.cluster.token
+      min_size             = 1
+      max_size             = 7
+      desired_size         = 1
+      force_update_version = true
+      instance_types       = ["t3.medium", "t3a.medium"]
+    }
   }
+  apply_config_map_aws_auth = true
+
 }
 
+################################################################################
+# Kubernetes provider configuration
+################################################################################
+
+data "aws_eks_cluster" "this" {
+  name = module.eks.cluster_id
+}
+
+data "aws_eks_cluster_auth" "this" {
+  name = module.eks.cluster_certificate_authority_data
+}
+provider "kubernetes" {
+  host                   = data.aws_eks_cluster.this.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.this.certificate_authority[0].data)
+  token                  = data.aws_eks_cluster_auth.this.token
+}
 
 module "karpenter" {
 
