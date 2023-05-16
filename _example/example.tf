@@ -44,15 +44,15 @@ module "subnets" {
 
 module "eks" {
   source  = "clouddrove/eks/aws"
-  version = "12.7.1"
+  version = "0.15.2"
 
-  name        = "karpenter-eks"
+  name        = "eks"
   environment = "test"
   label_order = ["environment", "name"]
   enabled     = true
 
   # EKS
-  kubernetes_version        = "1.25"
+  kubernetes_version        = "1.21"
   endpoint_private_access   = true
   endpoint_public_access    = true
   enabled_cluster_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
@@ -103,7 +103,6 @@ module "eks" {
     }
   }
   apply_config_map_aws_auth = true
-
 }
 
 ################################################################################
