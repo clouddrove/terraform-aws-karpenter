@@ -141,7 +141,5 @@ module "karpenter" {
 
   cluster_name             = module.eks.eks_cluster_id
   eks_cluster_endpoint     = module.eks.eks_cluster_endpoint
-  eks_worker_iam_role_name = module.eks.iam_role_name
-  provider_url             = module.eks.oidc_issuer_url
   depends_on               = [module.eks]
 }
