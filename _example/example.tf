@@ -44,7 +44,7 @@ module "subnets" {
 
 module "eks" {
   source  = "clouddrove/eks/aws"
-  version = "0.15.2"
+  version = "12.7.1"
 
   ## Tags
   name        = "eks-karpenter"
