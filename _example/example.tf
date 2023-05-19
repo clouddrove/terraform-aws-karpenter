@@ -88,7 +88,6 @@ module "eks" {
       node_group_taint_key      = "test"
       node_group_taint_value    = "value"
       node_group_taint_effect   = "NO_SCHEDULE"
-
     }
   }
 
