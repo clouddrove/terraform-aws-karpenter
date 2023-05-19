@@ -12,7 +12,7 @@ locals {
 
 module "vpc" {
   source  = "clouddrove/vpc/aws"
-  version = "0.15.0"
+  version = "1.3.0"
 
   name        = "vpc"
   environment = "test"
@@ -24,7 +24,7 @@ module "vpc" {
 
 module "subnets" {
   source  = "clouddrove/subnet/aws"
-  version = "0.15.0"
+  version = "1.3.0"
 
   name        = "subnets"
   environment = "test"
@@ -44,7 +44,7 @@ module "subnets" {
 
 module "eks" {
   source  = "clouddrove/eks/aws"
-  version = "0.15.1"
+  version = "0.15.2"
 
   ## Tags
   name        = "eks-karpenter"
@@ -88,7 +88,7 @@ module "eks" {
       node_group_taint_key      = "test"
       node_group_taint_value    = "value"
       node_group_taint_effect   = "NO_SCHEDULE"
-
+      launch_template_version   = 1
     }
   }
 
@@ -141,7 +141,5 @@ module "karpenter" {
 
   cluster_name             = module.eks.eks_cluster_id
   eks_cluster_endpoint     = module.eks.eks_cluster_endpoint
-  eks_worker_iam_role_name = module.eks.iam_role_name
-  provider_url             = module.eks.oidc_issuer_url
   depends_on               = [module.eks]
 }
