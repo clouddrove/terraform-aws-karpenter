@@ -9,7 +9,7 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
-# Add assignees
+    # Add assignees
     assignees:
       - "clouddrove-ci"
     # Add reviewer
@@ -19,7 +19,7 @@ updates:
     directory: "_example/" # Location of package manifests
     schedule:
       interval: "weekly"
-# Add assignees
+    # Add assignees
     assignees:
       - "clouddrove-ci"
     # Add reviewer
