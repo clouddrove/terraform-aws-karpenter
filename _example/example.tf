@@ -11,8 +11,7 @@ locals {
 
 
 module "vpc" {
-  source  = "clouddrove/vpc/aws"
-  version = "1.3.0"
+  source       = "git::https://github.com/clouddrove/terraform-aws-vpc.git?ref=issue-441"
 
   name        = "vpc"
   environment = "test"
