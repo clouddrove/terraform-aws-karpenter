@@ -11,8 +11,8 @@ locals {
 
 
 module "vpc" {
-  source       = "git::https://github.com/clouddrove/terraform-aws-vpc.git?ref=issue-441"
-
+  source  = "clouddrove/vpc/aws"
+  version = "1.3.1"
   name        = "vpc"
   environment = "test"
   label_order = ["environment", "name"]
@@ -191,7 +191,7 @@ module "karpenter" {
   create_namespace  = true
   karpenter_version = "0.6.0"
 
-  cluster_name             = module.eks.eks_cluster_id
+  cluster_name             = module.eks.cluster_name
   eks_cluster_endpoint     = module.eks.eks_cluster_endpoint
   depends_on               = [module.eks]
 }
