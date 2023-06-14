@@ -12,8 +12,7 @@ locals {
 
 module "vpc" {
   source  = "clouddrove/vpc/aws"
-  version = "1.3.0"
-
+  version = "1.3.1"
   name        = "vpc"
   environment = "test"
   label_order = ["environment", "name"]
@@ -41,90 +40,143 @@ module "subnets" {
   igw_id              = module.vpc.igw_id
 }
 
+module "keypair" {
+  source  = "clouddrove/keypair/aws"
+  version = "1.3.0"
+
+  name        = "key"
+  environment = "test"
+  label_order = ["name", "environment"]
+
+  enable_key_pair = true
+  public_key      = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDc4AjHFctUATtd5of4u9bJtTgkh9bKogSDjxc9QqbylRORxUa422jO+t1ldTVdyqDRKltxQCJb4v23HZc2kssU5uROxpiF2fzgiHXRduL+RtyOtY2J+rNUdCRmHz4WQySblYpgteIJZpVo2smwdek8xSpjoHXhgxxa9hb4pQQwyjtVGEdH8vdYwtxgPZgPVaJgHVeJgVmhjTf2VGTATaeR9txzHsEPxhe/n1y34mQjX0ygEX8x0RZzlGziD1ih3KPaIHcpTVSYYk4LOoMK38vEI67SIMomskKn4yU043s+t9ZriJwk2V9+oU6tJU/5E1rd0SskXUhTypc3/Znc/rkYtLe8s6Uy26LOrBFzlhnCT7YH1XbCv3rEO+Nn184T4BSHeW2up8UJ1SOEd+WzzynXczdXoQcBN2kaz4dYFpRXchsAB6ejZrbEq7wyZvutf11OiS21XQ67+30lEL2WAO4i95e4sI8AdgwJgzrqVcicr3ImE+BRDkndMn5k1LhNGqwMD3Iuoel84xvinPAcElDLiFmL3BJVA/53bAlUmWqvUGW9SL5JpLUmZgE6kp+Tps7D9jpooGGJKmqgJLkJTzAmTSJh0gea/rT5KwI4j169TQD9xl6wFqns4BdQ4dMKHQCgDx8LbEd96l9F9ruWwQ8EAZBe4nIEKTV9ri+04JVhSQ== hello@clouddrove.com"
+}
+
+module "ssh" {
+  source  = "clouddrove/security-group/aws"
+  version = "1.3.0"
+
+  name        = "ssh"
+  environment = "test"
+  label_order = ["environment", "name"]
+
+  vpc_id        = module.vpc.vpc_id
+  allowed_ip    = [module.vpc.vpc_cidr_block]
+  allowed_ports = [22]
+}
 
 module "eks" {
   source  = "clouddrove/eks/aws"
-  version = "0.15.2"
+  version = "1.3.0"
 
   ## Tags
-  name        = "eks-karpenter"
+  name        = "eks"
   environment = "test"
   label_order = ["environment", "name"]
   enabled     = true
 
-  ## Network
-  vpc_id                              = module.vpc.vpc_id
-  eks_subnet_ids                      = module.subnets.public_subnet_id
-  worker_subnet_ids                   = module.subnets.private_subnet_id
-  endpoint_private_access             = false
-  endpoint_public_access              = true
-  public_access_cidrs                 = ["0.0.0.0/0"]
-  cluster_encryption_config_resources = ["secrets"]
-  associate_public_ip_address         = false
-  ## volume_size
-  volume_size = 30
+  # EKS
+  kubernetes_version        = "1.26"
+  endpoint_private_access   = true
+  endpoint_public_access    = false
+  enabled_cluster_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+  oidc_provider_enabled     = true
+  # Networking
+  vpc_id                  = module.vpc.vpc_id
+  subnet_ids              = module.subnets.private_subnet_id
+  allowed_security_groups = [module.ssh.security_group_ids]
+  allowed_cidr_blocks     = ["10.0.0.0/16"]
 
-  ondemand_enabled      = false
-  spot_enabled          = false
-  spot_schedule_enabled = false
-
-
-  #node_group
-  node_group_enabled = true
-  node_groups = {
+  ################################################################################
+  # AWS Managed Node Group
+  ################################################################################
+  # Node Groups Defaults Values It will Work all Node Groups
+  managed_node_group_defaults = {
+    subnet_ids                          = module.subnets.private_subnet_id
+    key_name                            = module.keypair.name
+    nodes_additional_security_group_ids = [module.ssh.security_group_ids]
+    tags = {
+      Example = "test"
+    }
+    block_device_mappings = {
+      xvda = {
+        device_name = "/dev/xvda"
+        ebs = {
+          volume_size = 50
+          volume_type = "gp3"
+          iops        = 3000
+          throughput  = 150
+        }
+      }
+    }
+  }
+  managed_node_group = {
     tools = {
-      node_group_name           = "autoscale"
-      subnet_ids                = module.subnets.private_subnet_id
-      ami_type                  = "AL2_x86_64"
-      node_group_volume_size    = 100
-      node_group_instance_types = ["t3.large"]
-      kubernetes_labels         = {}
-      kubernetes_version        = "1.21"
-      node_group_desired_size   = 1
-      node_group_max_size       = 1
-      node_group_min_size       = 1
-      node_group_capacity_type  = "ON_DEMAND"
-      node_group_volume_type    = "gp2"
-      node_group_taint_key      = "test"
-      node_group_taint_value    = "value"
-      node_group_taint_effect   = "NO_SCHEDULE"
-      launch_template_version   = 1
+      min_size       = 1
+      max_size       = 7
+      desired_size   = 2
+      instance_types = ["t4g.medium"]
+    }
+
+    spot = {
+      name          = "spot"
+      capacity_type = "SPOT"
+
+      min_size             = 1
+      max_size             = 7
+      desired_size         = 1
+      force_update_version = true
+      instance_types       = ["t4g.medium"]
+    }
+  }
+  apply_config_map_aws_auth = true
+  map_additional_iam_users = [
+    {
+      userarn  = "arn:aws:iam::123456789:user/hello@clouddrove.com"
+      username = "hello@clouddrove.com"
+      groups   = ["system:masters"]
+    }
+  ]
+  # Schdule EKS Managed Auto Scaling node group
+  schedules = {
+    scale-up = {
+      min_size     = 2
+      max_size     = 2 # Retains current max size
+      desired_size = 2
+      start_time   = "2023-05-15T19:00:00Z"
+      end_time     = "2023-05-19T19:00:00Z"
+      timezone     = "Europe/Amsterdam"
+      recurrence   = "0 7 * * 1"
+    },
+    scale-down = {
+      min_size     = 0
+      max_size     = 0 # Retains current max size
+      desired_size = 0
+      start_time   = "2023-05-12T12:00:00Z"
+      end_time     = "2024-03-05T12:00:00Z"
+      timezone     = "Europe/Amsterdam"
+      recurrence   = "0 7 * * 5"
     }
   }
 
 
-  ## Cluster
-  wait_for_capacity_timeout = "15m"
-  apply_config_map_aws_auth = true
-  kubernetes_version        = "1.21"
-  oidc_provider_enabled     = true
-  ## Health Checks
-  cpu_utilization_high_threshold_percent = 80
-  cpu_utilization_low_threshold_percent  = 20
-  health_check_type                      = "EC2"
 }
 
+################################################################################
+# Kubernetes provider configuration
+################################################################################
 
-data "aws_eks_cluster" "cluster" {
-  name = module.eks.eks_cluster_id
+data "aws_eks_cluster" "this" {
+  name = module.eks.cluster_id
 }
 
-data "aws_eks_cluster_auth" "cluster" {
-  name = module.eks.eks_cluster_id
+data "aws_eks_cluster_auth" "this" {
+  name = module.eks.cluster_certificate_authority_data
 }
-
 provider "kubernetes" {
-  host                   = data.aws_eks_cluster.cluster.endpoint
-  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority[0].data)
-  token                  = data.aws_eks_cluster_auth.cluster.token
-}
-
-provider "helm" {
-  kubernetes {
-    host                   = data.aws_eks_cluster.cluster.endpoint
-    cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority[0].data)
-    token                  = data.aws_eks_cluster_auth.cluster.token
-  }
+  host                   = data.aws_eks_cluster.this.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.this.certificate_authority[0].data)
+  token                  = data.aws_eks_cluster_auth.this.token
 }
 
 
@@ -139,7 +191,7 @@ module "karpenter" {
   create_namespace  = true
   karpenter_version = "0.6.0"
 
-  cluster_name             = module.eks.eks_cluster_id
+  cluster_name             = module.eks.cluster_name
   eks_cluster_endpoint     = module.eks.eks_cluster_endpoint
   depends_on               = [module.eks]
 }
