@@ -70,7 +70,7 @@ variable "role_path" {
 
 variable "role_permissions_boundary_arn" {
   type        = string
-  default     = ""
+  default     = null
   description = "Permissions boundary ARN to use for IAM role"
 }
 
@@ -117,33 +117,36 @@ variable "force_detach_policies" {
   default     = false
 }
 
-
-
 variable "cluster_name" {
   type        = string
+  default = "test"
   description = "The name of EKS cluster"
 }
 
 variable "namespace" {
   type        = string
-  default     = ""
+  default     = null
   description = ""
 }
+
 variable "create_namespace" {
   type        = bool
   default     = false
   description = ""
 }
+
 variable "eks_cluster_endpoint" {
   type        = string
-  default     = ""
-  description = ""
+  default     = null
+  description = "eks cluster endpoint"
 }
+
 variable "eks_worker_iam_role_name" {
   type        = string
-  default     = ""
-  description = ""
+  default     = null
+  description = "eks iam role name"
 }
+
 variable "karpenter_version" {
   type        = string
   default     = "0.5.1"
