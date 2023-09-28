@@ -62,8 +62,6 @@ module "ssh" {
   label_order = ["environment", "name"]
 
   vpc_id        = module.vpc.vpc_id
-  allowed_ip    = [module.vpc.vpc_cidr_block]
-  allowed_ports = [22]
 }
 
 module "eks" {
