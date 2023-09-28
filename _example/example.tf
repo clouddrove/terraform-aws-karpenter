@@ -3,6 +3,8 @@ provider "aws" {
 }
 
 locals {
+  vpc_cidr_block        = module.vpc.vpc_cidr_block
+  additional_cidr_block = "172.16.0.0/16"
   tags = {
     "kubernetes.io/cluster/test-eks-cluster" = "shared"
   }
@@ -50,47 +52,164 @@ module "keypair" {
   enable_key_pair            = true
 }
 
+# ################################################################################
+# Security Groups module call
+################################################################################
+
 module "ssh" {
   source  = "clouddrove/security-group/aws"
   version = "2.0.0"
 
   name        = "ssh"
   environment = "test"
-  label_order = ["environment", "name"]
+  vpc_id      = module.vpc.vpc_id
+  new_sg_ingress_rules_with_cidr_blocks = [{
+    rule_count  = 1
+    from_port   = 22
+    protocol    = "tcp"
+    to_port     = 22
+    cidr_blocks = [local.vpc_cidr_block, local.additional_cidr_block]
+    description = "Allow ssh traffic."
+    },
+    {
+      rule_count  = 2
+      from_port   = 27017
+      protocol    = "tcp"
+      to_port     = 27017
+      cidr_blocks = [local.additional_cidr_block]
+      description = "Allow Mongodb traffic."
+    }
+  ]
 
-  vpc_id = module.vpc.vpc_id
+  ## EGRESS Rules
+  new_sg_egress_rules_with_cidr_blocks = [{
+    rule_count  = 1
+    from_port   = 22
+    protocol    = "tcp"
+    to_port     = 22
+    cidr_blocks = [local.vpc_cidr_block, local.additional_cidr_block]
+    description = "Allow ssh outbound traffic."
+    },
+    {
+      rule_count  = 2
+      from_port   = 27017
+      protocol    = "tcp"
+      to_port     = 27017
+      cidr_blocks = [local.additional_cidr_block]
+      description = "Allow Mongodb outbound traffic."
+  }]
 }
 
+module "http_https" {
+  source  = "clouddrove/security-group/aws"
+  version = "2.0.0"
+
+  name        = "http-https"
+  environment = "test"
+
+  vpc_id = module.vpc.vpc_id
+  ## INGRESS Rules
+  new_sg_ingress_rules_with_cidr_blocks = [{
+    rule_count  = 1
+    from_port   = 22
+    protocol    = "tcp"
+    to_port     = 22
+    cidr_blocks = [local.vpc_cidr_block]
+    description = "Allow ssh traffic."
+    },
+    {
+      rule_count  = 2
+      from_port   = 80
+      protocol    = "tcp"
+      to_port     = 80
+      cidr_blocks = [local.vpc_cidr_block]
+      description = "Allow http traffic."
+    },
+    {
+      rule_count  = 3
+      from_port   = 443
+      protocol    = "tcp"
+      to_port     = 443
+      cidr_blocks = [local.vpc_cidr_block]
+      description = "Allow https traffic."
+    }
+  ]
+
+  ## EGRESS Rules
+  new_sg_egress_rules_with_cidr_blocks = [{
+    rule_count       = 1
+    from_port        = 0
+    protocol         = "-1"
+    to_port          = 0
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+    description      = "Allow all traffic."
+    }
+  ]
+}
+
+################################################################################
+# KMS Module call
+################################################################################
+module "kms" {
+  source  = "clouddrove/kms/aws"
+  version = "1.3.0"
+
+  name                = "kms"
+  environment         = "test"
+  label_order         = ["environment", "name"]
+  enabled             = true
+  description         = "KMS key for EBS of EKS nodes"
+  enable_key_rotation = false
+  policy              = data.aws_iam_policy_document.kms.json
+}
+
+data "aws_iam_policy_document" "kms" {
+  version = "2012-10-17"
+  statement {
+    sid    = "Enable IAM User Permissions"
+    effect = "Allow"
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+    actions   = ["kms:*"]
+    resources = ["*"]
+  }
+}
+
+data "aws_caller_identity" "current" {}
+
+
+################################################################################
+# EKS Module call
+################################################################################
 module "eks" {
   source  = "clouddrove/eks/aws"
-  version = "1.4.0"
+  enabled = true
 
-  ## Tags
   name        = "eks"
   environment = "test"
   label_order = ["environment", "name"]
-  enabled     = true
 
   # EKS
-  kubernetes_version        = "1.26"
-  endpoint_private_access   = true
-  endpoint_public_access    = false
-  enabled_cluster_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
-  oidc_provider_enabled     = true
+  kubernetes_version     = "1.27"
+  endpoint_public_access = true
   # Networking
-  vpc_id                  = module.vpc.vpc_id
-  subnet_ids              = module.subnets.private_subnet_id
-  allowed_cidr_blocks     = ["10.0.0.0/16"]
+  vpc_id                            = module.vpc.vpc_id
+  subnet_ids                        = module.subnets.private_subnet_id
+  allowed_security_groups           = [module.ssh.security_group_id]
+  eks_additional_security_group_ids = ["${module.ssh.security_group_id}", "${module.http_https.security_group_id}"]
+  allowed_cidr_blocks               = [local.vpc_cidr_block]
 
-  ################################################################################
   # AWS Managed Node Group
-  ################################################################################
   # Node Groups Defaults Values It will Work all Node Groups
   managed_node_group_defaults = {
     subnet_ids                          = module.subnets.private_subnet_id
-    key_name                            = module.keypair.name
+    nodes_additional_security_group_ids = [module.ssh.security_group_id]
     tags = {
-      Example = "test"
+      "kubernetes.io/cluster/${module.eks.cluster_name}" = "shared"
+      "k8s.io/cluster/${module.eks.cluster_name}"        = "shared"
     }
     block_device_mappings = {
       xvda = {
@@ -100,29 +219,33 @@ module "eks" {
           volume_type = "gp3"
           iops        = 3000
           throughput  = 150
+          encrypted   = true
+          kms_key_id  = module.kms.key_arn
         }
       }
     }
   }
   managed_node_group = {
-    tools = {
+    critical = {
+      name           = "${module.eks.cluster_name}-critical"
+      capacity_type  = "ON_DEMAND"
       min_size       = 1
-      max_size       = 7
+      max_size       = 2
       desired_size   = 2
-      instance_types = ["t4g.medium"]
+      instance_types = ["t3.medium"]
     }
 
-    spot = {
-      name          = "spot"
-      capacity_type = "SPOT"
-
+    application = {
+      name                 = "${module.eks.cluster_name}-application"
+      capacity_type        = "SPOT"
       min_size             = 1
-      max_size             = 7
+      max_size             = 2
       desired_size         = 1
       force_update_version = true
-      instance_types       = ["t4g.medium"]
+      instance_types       = ["t3.medium"]
     }
   }
+
   apply_config_map_aws_auth = true
   map_additional_iam_users = [
     {
@@ -131,46 +254,23 @@ module "eks" {
       groups   = ["system:masters"]
     }
   ]
-  # Schdule EKS Managed Auto Scaling node group
-  schedules = {
-    scale-up = {
-      min_size     = 2
-      max_size     = 2 # Retains current max size
-      desired_size = 2
-      start_time   = "2023-05-15T19:00:00Z"
-      end_time     = "2023-05-19T19:00:00Z"
-      timezone     = "Europe/Amsterdam"
-      recurrence   = "0 7 * * 1"
-    },
-    scale-down = {
-      min_size     = 0
-      max_size     = 0 # Retains current max size
-      desired_size = 0
-      start_time   = "2023-05-12T12:00:00Z"
-      end_time     = "2024-03-05T12:00:00Z"
-      timezone     = "Europe/Amsterdam"
-      recurrence   = "0 7 * * 5"
-    }
-  }
 }
-
-################################################################################
-# Kubernetes provider configuration
-################################################################################
-
+## Kubernetes provider configuration
 data "aws_eks_cluster" "this" {
-  name = module.eks.cluster_id
+  depends_on = [module.eks]
+  name       = module.eks.cluster_id
 }
 
 data "aws_eks_cluster_auth" "this" {
-  name = module.eks.cluster_certificate_authority_data
+  depends_on = [module.eks]
+  name       = module.eks.cluster_certificate_authority_data
 }
+
 provider "kubernetes" {
   host                   = data.aws_eks_cluster.this.endpoint
   cluster_ca_certificate = base64decode(data.aws_eks_cluster.this.certificate_authority[0].data)
   token                  = data.aws_eks_cluster_auth.this.token
 }
-
 
 module "karpenter" {
   source = "../"
@@ -183,7 +283,6 @@ module "karpenter" {
   create_namespace  = true
   karpenter_version = "0.6.0"
 
-  cluster_name         = module.eks.cluster_name
-  eks_cluster_endpoint = module.eks.eks_cluster_endpoint
-  depends_on           = [module.eks]
+  cluster_name = module.eks.cluster_name
+  depends_on   = [module.eks]
 }
