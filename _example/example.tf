@@ -28,8 +28,6 @@ module "subnets" {
   name        = "subnets"
   environment = "test"
   label_order = ["environment", "name"]
-  tags        = local.tags
-  enabled     = true
 
   nat_gateway_enabled = true
   availability_zones  = ["eu-west-1a", "eu-west-1b"]
