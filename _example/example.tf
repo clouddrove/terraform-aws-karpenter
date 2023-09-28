@@ -16,7 +16,6 @@ module "vpc" {
   name        = "vpc"
   environment = "test"
   label_order = ["environment", "name"]
-  vpc_enabled = true
 
   cidr_block = "10.10.0.0/16"
 }
