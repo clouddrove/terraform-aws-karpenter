@@ -119,7 +119,7 @@ variable "force_detach_policies" {
 
 variable "cluster_name" {
   type        = string
-  default = "test"
+  default     = "test"
   description = "The name of EKS cluster"
 }
 
