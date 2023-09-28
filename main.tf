@@ -112,7 +112,7 @@ resource "aws_iam_role_policy" "karpenter_contoller" {
   count = var.enabled ? 1 : 0
   name  = format("%s-%s", module.labels.id, var.cluster_name)
   role  = join("", aws_iam_role.this[*].name)
-#tfsec:ignore:aws-iam-no-policy-wildcards
+  #tfsec:ignore:aws-iam-no-policy-wildcards
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [

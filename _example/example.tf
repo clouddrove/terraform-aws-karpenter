@@ -11,8 +11,8 @@ locals {
 
 
 module "vpc" {
-  source  = "clouddrove/vpc/aws"
-  version = "2.0.0"
+  source      = "clouddrove/vpc/aws"
+  version     = "2.0.0"
   name        = "vpc"
   environment = "test"
   label_order = ["environment", "name"]
@@ -180,7 +180,7 @@ provider "kubernetes" {
 
 
 module "karpenter" {
-  source      = "../"
+  source = "../"
 
   name        = "karpenter"
   environment = "test"
@@ -190,7 +190,7 @@ module "karpenter" {
   create_namespace  = true
   karpenter_version = "0.6.0"
 
-  cluster_name             = module.eks.cluster_name
-  eks_cluster_endpoint     = module.eks.eks_cluster_endpoint
-  depends_on               = [module.eks]
+  cluster_name         = module.eks.cluster_name
+  eks_cluster_endpoint = module.eks.eks_cluster_endpoint
+  depends_on           = [module.eks]
 }
