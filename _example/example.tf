@@ -59,7 +59,7 @@ module "ssh" {
   environment = "test"
   label_order = ["environment", "name"]
 
-  vpc_id        = module.vpc.vpc_id
+  vpc_id = module.vpc.vpc_id
 }
 
 module "eks" {
