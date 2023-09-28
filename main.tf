@@ -95,7 +95,7 @@ resource "aws_iam_role" "this" {
   force_detach_policies = var.force_detach_policies
   permissions_boundary  = var.role_permissions_boundary_arn
 
-  assume_role_policy = join("", data.aws_iam_policy_document.assume_role_with_oidc.*.json)
+  assume_role_policy = join("", data.aws_iam_policy_document.assume_role_with_oidc[*].json)
 
   tags = module.labels.tags
 }
@@ -103,7 +103,7 @@ resource "aws_iam_role" "this" {
 resource "aws_iam_role_policy_attachment" "custom" {
   count = var.enabled ? local.number_of_role_policy_arns : 0
 
-  role       = join("", aws_iam_role.this.*.name)
+  role       = join("", aws_iam_role.this[*].name)
   policy_arn = var.role_policy_arns[count.index]
 }
 
@@ -111,7 +111,7 @@ resource "aws_iam_role_policy_attachment" "custom" {
 resource "aws_iam_role_policy" "karpenter_contoller" {
   count = var.enabled ? 1 : 0
   name  = format("%s-%s", module.labels.id, var.cluster_name)
-  role  = join("", aws_iam_role.this.*.name)
+  role  = join("", aws_iam_role.this[*].name)
 #tfsec:ignore:aws-iam-no-policy-wildcards
   policy = jsonencode({
     Version = "2012-10-17"
@@ -171,7 +171,7 @@ resource "helm_release" "karpenter" {
 
   set {
     name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
-    value = join("", aws_iam_role.this.*.arn)
+    value = join("", aws_iam_role.this[*].arn)
   }
 
   set {

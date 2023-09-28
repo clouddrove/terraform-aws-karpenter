@@ -23,7 +23,7 @@ module "vpc" {
 
 module "subnets" {
   source  = "clouddrove/subnet/aws"
-  version = "1.3.0"
+  version = "2.0.0"
 
   name        = "subnets"
   environment = "test"
@@ -68,7 +68,7 @@ module "ssh" {
 
 module "eks" {
   source  = "clouddrove/eks/aws"
-  version = "1.3.0"
+  version = "1.4.0"
 
   ## Tags
   name        = "eks"
@@ -159,8 +159,6 @@ module "eks" {
       recurrence   = "0 7 * * 5"
     }
   }
-
-
 }
 
 ################################################################################
@@ -182,8 +180,8 @@ provider "kubernetes" {
 
 
 module "karpenter" {
-
   source      = "../"
+
   name        = "karpenter"
   environment = "test"
   label_order = ["environment", "name"]
