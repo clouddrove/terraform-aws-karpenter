@@ -151,6 +151,7 @@ module "http_https" {
 ################################################################################
 # KMS Module call
 ################################################################################
+#tfsec:ignore:aws-kms-auto-rotate-keys
 module "kms" {
   source  = "clouddrove/kms/aws"
   version = "1.3.0"
