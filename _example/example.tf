@@ -80,7 +80,6 @@ module "eks" {
   # Networking
   vpc_id                  = module.vpc.vpc_id
   subnet_ids              = module.subnets.private_subnet_id
-  allowed_security_groups = [module.ssh.security_group_ids]
   allowed_cidr_blocks     = ["10.0.0.0/16"]
 
   ################################################################################
@@ -90,7 +89,6 @@ module "eks" {
   managed_node_group_defaults = {
     subnet_ids                          = module.subnets.private_subnet_id
     key_name                            = module.keypair.name
-    nodes_additional_security_group_ids = [module.ssh.security_group_ids]
     tags = {
       Example = "test"
     }
