@@ -143,7 +143,7 @@ variable "eks_cluster_endpoint" {
 
 variable "eks_worker_iam_role_name" {
   type        = string
-  default     = null
+  default     = ""
   description = "eks iam role name"
 }
 

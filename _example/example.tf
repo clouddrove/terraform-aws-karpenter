@@ -5,9 +5,6 @@ provider "aws" {
 locals {
   vpc_cidr_block        = module.vpc.vpc_cidr_block
   additional_cidr_block = "172.16.0.0/16"
-  tags = {
-    "kubernetes.io/cluster/test-eks-cluster" = "shared"
-  }
 }
 
 module "vpc" {
@@ -185,6 +182,8 @@ data "aws_caller_identity" "current" {}
 ################################################################################
 module "eks" {
   source  = "clouddrove/eks/aws"
+  version = "1.4.0"
+
   enabled = true
 
   name        = "eks"
@@ -198,7 +197,7 @@ module "eks" {
   vpc_id                            = module.vpc.vpc_id
   subnet_ids                        = module.subnets.private_subnet_id
   allowed_security_groups           = [module.ssh.security_group_id]
-  eks_additional_security_group_ids = ["${module.ssh.security_group_id}", "${module.http_https.security_group_id}"]
+  eks_additional_security_group_ids = [module.ssh.security_group_id, module.http_https.security_group_id]
   allowed_cidr_blocks               = [local.vpc_cidr_block]
 
   # AWS Managed Node Group
