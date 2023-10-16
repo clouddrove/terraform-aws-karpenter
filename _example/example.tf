@@ -149,7 +149,7 @@ module "http_https" {
 #tfsec:ignore:aws-kms-auto-rotate-keys
 module "kms" {
   source  = "clouddrove/kms/aws"
-  version = "1.3.0"
+  version = "1.3.1"
 
   name                = "kms"
   environment         = "test"
