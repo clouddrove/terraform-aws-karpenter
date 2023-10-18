@@ -258,5 +258,4 @@ module "karpenter" {
   karpenter_version        = "0.31.1"
   cluster_name             = module.eks.cluster_name
   depends_on               = [module.eks]
-  eks_worker_iam_role_name = "arn:aws:iam::xxxxxx:role/karpenter"
 }
