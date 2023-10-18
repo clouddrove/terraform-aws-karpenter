@@ -20,7 +20,7 @@ variable "repository" {
 
 variable "label_order" {
   type        = list(any)
-  default     = []
+  default     = ["environment", "name"]
   description = "Label order, e.g. `name`,`application`."
 }
 
@@ -143,7 +143,7 @@ variable "eks_cluster_endpoint" {
 
 variable "eks_worker_iam_role_name" {
   type        = string
-  default     = null
+  default     = ""
   description = "eks iam role name"
 }
 

@@ -1,30 +1,30 @@
 provider "aws" {
-  region = "eu-west-1"
+  region = local.region
 }
 
 locals {
+  region                = "eu-west-1"
   vpc_cidr_block        = module.vpc.vpc_cidr_block
   additional_cidr_block = "172.16.0.0/16"
+  name                  = "karpenter"
+  environment           = "test"
 }
 
 module "vpc" {
-  source      = "clouddrove/vpc/aws"
-  version     = "2.0.0"
-  name        = "vpc"
-  environment = "test"
-  label_order = ["environment", "name"]
+  source  = "clouddrove/vpc/aws"
+  version = "2.0.0"
 
-  cidr_block = "10.10.0.0/16"
+  name        = "${local.name}-vpc"
+  environment = local.environment
+  cidr_block  = "10.10.0.0/16"
 }
 
 module "subnets" {
   source  = "clouddrove/subnet/aws"
   version = "2.0.0"
 
-  name        = "subnets"
-  environment = "test"
-  label_order = ["environment", "name"]
-
+  name                = "${local.name}-subnet"
+  environment         = local.environment
   nat_gateway_enabled = true
   availability_zones  = ["eu-west-1a", "eu-west-1b"]
   vpc_id              = module.vpc.vpc_id
@@ -38,10 +38,8 @@ module "keypair" {
   source  = "clouddrove/keypair/aws"
   version = "1.3.1"
 
-  name        = "key"
-  environment = "test"
-  label_order = ["environment", "name"]
-
+  name                       = "${local.name}-key"
+  environment                = local.environment
   public_key                 = ""
   create_private_key_enabled = true
   enable_key_pair            = true
@@ -55,8 +53,8 @@ module "ssh" {
   source  = "clouddrove/security-group/aws"
   version = "2.0.0"
 
-  name        = "ssh"
-  environment = "test"
+  name        = "${local.name}-ssh"
+  environment = local.environment
   vpc_id      = module.vpc.vpc_id
   new_sg_ingress_rules_with_cidr_blocks = [{
     rule_count  = 1
@@ -65,14 +63,6 @@ module "ssh" {
     to_port     = 22
     cidr_blocks = [local.vpc_cidr_block, local.additional_cidr_block]
     description = "Allow ssh traffic."
-    },
-    {
-      rule_count  = 2
-      from_port   = 27017
-      protocol    = "tcp"
-      to_port     = 27017
-      cidr_blocks = [local.additional_cidr_block]
-      description = "Allow Mongodb traffic."
     }
   ]
 
@@ -84,14 +74,6 @@ module "ssh" {
     to_port     = 22
     cidr_blocks = [local.vpc_cidr_block, local.additional_cidr_block]
     description = "Allow ssh outbound traffic."
-    },
-    {
-      rule_count  = 2
-      from_port   = 27017
-      protocol    = "tcp"
-      to_port     = 27017
-      cidr_blocks = [local.additional_cidr_block]
-      description = "Allow Mongodb outbound traffic."
   }]
 }
 #tfsec:ignore:aws-ec2-no-public-egress-sgr
@@ -99,10 +81,9 @@ module "http_https" {
   source  = "clouddrove/security-group/aws"
   version = "2.0.0"
 
-  name        = "http-https"
-  environment = "test"
-
-  vpc_id = module.vpc.vpc_id
+  name        = "${local.name}-http-https"
+  environment = local.environment
+  vpc_id      = module.vpc.vpc_id
   ## INGRESS Rules
   new_sg_ingress_rules_with_cidr_blocks = [{
     rule_count  = 1
@@ -151,9 +132,8 @@ module "kms" {
   source  = "clouddrove/kms/aws"
   version = "1.3.1"
 
-  name                = "kms"
-  environment         = "test"
-  label_order         = ["environment", "name"]
+  name                = "${local.name}-kms"
+  environment         = local.environment
   enabled             = true
   description         = "KMS key for EBS of EKS nodes"
   enable_key_rotation = false
@@ -186,12 +166,10 @@ module "eks" {
 
   enabled = true
 
-  name        = "eks"
-  environment = "test"
-  label_order = ["environment", "name"]
-
+  name        = "${local.name}-eks"
+  environment = local.environment
   # EKS
-  kubernetes_version     = "1.27"
+  kubernetes_version     = "1.28"
   endpoint_public_access = true
   # Networking
   vpc_id                            = module.vpc.vpc_id
@@ -273,14 +251,12 @@ provider "kubernetes" {
 module "karpenter" {
   source = "../"
 
-  name        = "karpenter"
-  environment = "test"
-  label_order = ["environment", "name"]
-
+  name              = "${local.name}-karpenter"
+  environment       = local.environment
   namespace         = "test"
   create_namespace  = true
-  karpenter_version = "0.6.0"
-
-  cluster_name = module.eks.cluster_name
-  depends_on   = [module.eks]
+  karpenter_version = "0.31.1"
+  cluster_name      = module.eks.cluster_name
+  depends_on        = [module.eks]
+  eks_worker_iam_role_name = "arn:aws:iam::xxxxxxxxxxxx:role/KarpenterControllerRole-clouddrove-Karpenter"
 }
