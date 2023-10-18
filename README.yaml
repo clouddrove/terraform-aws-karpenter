@@ -16,18 +16,16 @@ github_repo: clouddrove/terraform-aws-karpenter
 
 # Badges to display
 badges:
-  - name: "Terraform"
-    image: "https://img.shields.io/badge/Terraform-v1.1.7-green"
-    url: "https://www.terraform.io"
-  - name: "Licence"
-    image: "https://img.shields.io/badge/License-APACHE-blue.svg"
-    url: "LICENSE.md"
+  - name: "Latest Release"
+    image: "https://img.shields.io/github/release/clouddrove/terraform-aws-karpenter.svg"
+    url: "https://github.com/clouddrove/terraform-aws-karpenter/releases/latest"
   - name: "tfsec"
     image: "https://github.com/clouddrove/terraform-aws-karpenter/actions/workflows/tfsec.yml/badge.svg"
     url: "https://github.com/clouddrove/terraform-aws-karpenter/actions/workflows/tfsec.yml"
-  - name: "static-checks"
-    image: "https://github.com/clouddrove/terraform-aws-karpenter/actions/workflows/terraform.yml/badge.svg"
-    url: "https://github.com/clouddrove/terraform-aws-karpenter/actions/workflows/terraform.yml"
+  - name: "Licence"
+    image: "https://img.shields.io/badge/License-APACHE-blue.svg"
+    url: "LICENSE.md"
+
 #  description of this project
 description: |-
   Terraform module to create karpenter resource on AWS.
@@ -45,14 +43,14 @@ usage: |-
       module "karpenter" {
 
           source      = "clouddrove/karpenter/aws"
-          version     = "1.0.1"
+          version     = "1.3.0"
           name        = "karpenter"
           environment = "test"
           label_order = ["environment", "name"]
 
           namespace         = "test"
           create_namespace  = true
-          karpenter_version = "0.5.2"
+          karpenter_version = "0.31.1"
 
           cluster_name             = module.eks.eks_cluster_id
           eks_cluster_endpoint     = module.eks.eks_cluster_endpoint
