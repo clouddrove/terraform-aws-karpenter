@@ -143,7 +143,7 @@ variable "eks_cluster_endpoint" {
 
 variable "eks_worker_iam_role_name" {
   type        = string
-  default     = "arn:aws:iam::xxxxxxxxxxxx:role/KarpenterControllerRole-clouddrove-Karpenter"
+  default     = "arn:aws:iam::xxxxxx:role/karpenter-worker-role"
   description = "eks iam role name"
 }
 
