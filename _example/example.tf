@@ -251,12 +251,11 @@ provider "kubernetes" {
 module "karpenter" {
   source = "../"
 
-  name                     = "${local.name}-karpenter"
-  environment              = local.environment
-  namespace                = "test"
-  create_namespace         = true
-  karpenter_version        = "0.31.1"
-  cluster_name             = module.eks.cluster_name
-  depends_on               = [module.eks]
-  eks_worker_iam_role_name = module.eks.iam_role_name
+  name              = "${local.name}-karpenter"
+  environment       = local.environment
+  namespace         = "test"
+  create_namespace  = true
+  karpenter_version = "0.31.1"
+  cluster_name      = module.eks.cluster_name
+  depends_on        = [module.eks]
 }
