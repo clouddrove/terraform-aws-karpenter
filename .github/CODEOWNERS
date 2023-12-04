@@ -7,4 +7,4 @@
 * @clouddrove/approvers @clouddrove/contributors
 
 # Admins must review all changes to CODEOWNERS or the mergify configuration
-.github/CODEOWNERS  @anmolnagpal
+.github/CODEOWNERS  @anmolnagpal @clouddrove-ci
