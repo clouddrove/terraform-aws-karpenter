@@ -9,11 +9,12 @@ on:
 permissions:
   contents: write
   pull-requests: write
-  
+
 jobs:
   autoapprove:
     name: Auto Approve a PR by dependabot
     runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
     steps:
       - name: Approve a PR
         run: gh pr review --approve "$PR_URL"
