@@ -169,18 +169,18 @@ resource "helm_release" "karpenter" {
   namespace        = var.namespace
   create_namespace = var.create_namespace
 
-  set {
-    name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
-    value = join("", aws_iam_role.this[*].arn)
-  }
-
-  set {
-    name  = "controller.clusterName"
-    value = var.cluster_name
-  }
-
-  set {
-    name  = "controller.clusterEndpoint"
-    value = var.eks_cluster_endpoint
-  }
+  set = [
+    {
+      name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
+      value = join("", aws_iam_role.this[*].arn)
+    },
+    {
+      name  = "controller.clusterName"
+      value = var.cluster_name
+    },
+    {
+      name  = "controller.clusterEndpoint"
+      value = var.eks_cluster_endpoint
+    }
+  ]
 }

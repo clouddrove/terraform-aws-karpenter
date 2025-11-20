@@ -162,14 +162,14 @@ data "aws_caller_identity" "current" {}
 ################################################################################
 module "eks" {
   source  = "clouddrove/eks/aws"
-  version = "1.4.1"
+  version = "1.4.5"
 
   enabled = true
 
   name        = "${local.name}-eks"
   environment = local.environment
   # EKS
-  kubernetes_version     = "1.28"
+  kubernetes_version     = "1.32"
   endpoint_public_access = true
   # Networking
   vpc_id                            = module.vpc.vpc_id
@@ -255,7 +255,7 @@ module "karpenter" {
   environment       = local.environment
   namespace         = "test"
   create_namespace  = true
-  karpenter_version = "0.31.1"
+  karpenter_version = "0.16.3"
   cluster_name      = module.eks.cluster_name
   depends_on        = [module.eks]
 }
