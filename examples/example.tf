@@ -162,7 +162,7 @@ data "aws_caller_identity" "current" {}
 ################################################################################
 module "eks" {
   source  = "clouddrove/eks/aws"
-  version = "1.4.2"
+  version = "1.4.6"
 
   enabled = true
 
