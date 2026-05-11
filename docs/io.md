@@ -36,3 +36,4 @@
 | repository | Repository URL where to locate the requested chart. |
 | tags | n/a |
 | version | Specify the exact chart version to install. If this is not specified, the latest version is installed. |
+
