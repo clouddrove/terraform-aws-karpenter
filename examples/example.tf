@@ -38,11 +38,11 @@ module "keypair" {
   source  = "clouddrove/keypair/aws"
   version = "1.3.4"
 
-  name                       = "${local.name}-key"
-  environment                = local.environment
-  public_key                 = ""
-  create_private_key_enabled = true
-  enable_key_pair            = true
+  name               = "${local.name}-key"
+  environment        = local.environment
+  public_key         = ""
+  enable_private_key = true
+  enable_key_pair    = true
 }
 
 # ################################################################################
@@ -56,25 +56,44 @@ module "ssh" {
   name        = "${local.name}-ssh"
   environment = local.environment
   vpc_id      = module.vpc.vpc_id
-  new_sg_ingress_rules_with_cidr_blocks = [{
-    rule_count  = 1
-    from_port   = 22
-    protocol    = "tcp"
-    to_port     = 22
-    cidr_blocks = [local.vpc_cidr_block, local.additional_cidr_block]
-    description = "Allow ssh traffic."
+  new_sg_ingress_rules = [
+    {
+      key         = "ssh-vpc-cidr"
+      from_port   = 22
+      ip_protocol = "tcp"
+      to_port     = 22
+      cidr_ipv4   = local.vpc_cidr_block
+      description = "Allow ssh traffic from VPC CIDR."
+    },
+    {
+      key         = "ssh-additional-cidr"
+      from_port   = 22
+      ip_protocol = "tcp"
+      to_port     = 22
+      cidr_ipv4   = local.additional_cidr_block
+      description = "Allow ssh traffic from additional CIDR."
     }
   ]
 
   ## EGRESS Rules
-  new_sg_egress_rules_with_cidr_blocks = [{
-    rule_count  = 1
-    from_port   = 22
-    protocol    = "tcp"
-    to_port     = 22
-    cidr_blocks = [local.vpc_cidr_block, local.additional_cidr_block]
-    description = "Allow ssh outbound traffic."
-  }]
+  new_sg_egress_rules = [
+    {
+      key         = "ssh-vpc-cidr"
+      from_port   = 22
+      ip_protocol = "tcp"
+      to_port     = 22
+      cidr_ipv4   = local.vpc_cidr_block
+      description = "Allow ssh outbound traffic to VPC CIDR."
+    },
+    {
+      key         = "ssh-additional-cidr"
+      from_port   = 22
+      ip_protocol = "tcp"
+      to_port     = 22
+      cidr_ipv4   = local.additional_cidr_block
+      description = "Allow ssh outbound traffic to additional CIDR."
+    }
+  ]
 }
 #tfsec:ignore:aws-ec2-no-public-egress-sgr
 module "http_https" {
@@ -85,41 +104,46 @@ module "http_https" {
   environment = local.environment
   vpc_id      = module.vpc.vpc_id
   ## INGRESS Rules
-  new_sg_ingress_rules_with_cidr_blocks = [{
-    rule_count  = 1
-    from_port   = 22
-    protocol    = "tcp"
-    to_port     = 22
-    cidr_blocks = [local.vpc_cidr_block]
-    description = "Allow ssh traffic."
+  new_sg_ingress_rules = [
+    {
+      key         = "ssh-vpc-cidr"
+      from_port   = 22
+      ip_protocol = "tcp"
+      to_port     = 22
+      cidr_ipv4   = local.vpc_cidr_block
+      description = "Allow ssh traffic."
     },
     {
-      rule_count  = 2
+      key         = "http-vpc-cidr"
       from_port   = 80
-      protocol    = "tcp"
+      ip_protocol = "tcp"
       to_port     = 80
-      cidr_blocks = [local.vpc_cidr_block]
+      cidr_ipv4   = local.vpc_cidr_block
       description = "Allow http traffic."
     },
     {
-      rule_count  = 3
+      key         = "https-vpc-cidr"
       from_port   = 443
-      protocol    = "tcp"
+      ip_protocol = "tcp"
       to_port     = 443
-      cidr_blocks = [local.vpc_cidr_block]
+      cidr_ipv4   = local.vpc_cidr_block
       description = "Allow https traffic."
     }
   ]
 
   ## EGRESS Rules
-  new_sg_egress_rules_with_cidr_blocks = [{
-    rule_count       = 1
-    from_port        = 0
-    protocol         = "-1"
-    to_port          = 0
-    cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = ["::/0"]
-    description      = "Allow all traffic."
+  new_sg_egress_rules = [
+    {
+      key         = "all-ipv4"
+      ip_protocol = "-1"
+      cidr_ipv4   = "0.0.0.0/0"
+      description = "Allow all IPv4 traffic."
+    },
+    {
+      key         = "all-ipv6"
+      ip_protocol = "-1"
+      cidr_ipv6   = "::/0"
+      description = "Allow all IPv6 traffic."
     }
   ]
 }
@@ -255,7 +279,7 @@ module "karpenter" {
   environment       = local.environment
   namespace         = "test"
   create_namespace  = true
-  karpenter_version = "0.31.1"
+  karpenter_version = "v0.31.1"
   cluster_name      = module.eks.cluster_name
   depends_on        = [module.eks]
 }
