@@ -12,7 +12,7 @@ locals {
 
 module "vpc" {
   source  = "clouddrove/vpc/aws"
-  version = "2.0.4"
+  version = "2.0.5"
 
   name        = "${local.name}-vpc"
   environment = local.environment
@@ -21,7 +21,7 @@ module "vpc" {
 
 module "subnets" {
   source  = "clouddrove/subnet/aws"
-  version = "2.0.2"
+  version = "2.0.3"
 
   name                = "${local.name}-subnet"
   environment         = local.environment
@@ -51,7 +51,7 @@ module "keypair" {
 
 module "ssh" {
   source  = "clouddrove/security-group/aws"
-  version = "2.0.2"
+  version = "2.0.3"
 
   name        = "${local.name}-ssh"
   environment = local.environment
@@ -79,7 +79,7 @@ module "ssh" {
 #tfsec:ignore:aws-ec2-no-public-egress-sgr
 module "http_https" {
   source  = "clouddrove/security-group/aws"
-  version = "2.0.2"
+  version = "2.0.3"
 
   name        = "${local.name}-http-https"
   environment = local.environment
@@ -130,7 +130,7 @@ module "http_https" {
 #tfsec:ignore:aws-kms-auto-rotate-keys
 module "kms" {
   source  = "clouddrove/kms/aws"
-  version = "1.3.3"
+  version = "1.3.4"
 
   name                = "${local.name}-kms"
   environment         = local.environment
@@ -162,7 +162,7 @@ data "aws_caller_identity" "current" {}
 ################################################################################
 module "eks" {
   source  = "clouddrove/eks/aws"
-  version = "1.4.7"
+  version = "1.4.8"
 
   enabled = true
 
