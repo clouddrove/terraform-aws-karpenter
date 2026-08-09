@@ -9,7 +9,7 @@
 | enabled | n/a | `bool` | `true` | no |
 | environment | Environment (e.g. `prod`, `dev`, `staging`). | `string` | `""` | no |
 | force\_detach\_policies | Whether policies should be detached from this role when destroying | `bool` | `false` | no |
-| karpenter\_version | Helm version of karpenter | `string` | `"0.5.1"` | no |
+| karpenter\_version | Helm version of karpenter | `string` | `"v0.31.1"` | no |
 | label\_order | Label order, e.g. `name`,`application`. | `list(any)` | <pre>[<br>  "environment",<br>  "name"<br>]</pre> | no |
 | managedby | ManagedBy, eg 'CloudDrove' | `string` | `"hello@clouddrove.com"` | no |
 | max\_session\_duration | Maximum CLI/API session duration in seconds between 3600 and 43200 | `number` | `3600` | no |
