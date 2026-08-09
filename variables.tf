@@ -149,6 +149,6 @@ variable "eks_worker_iam_role_name" {
 
 variable "karpenter_version" {
   type        = string
-  default     = "0.5.1"
+  default     = "v0.31.1"
   description = "Helm version of karpenter"
 }

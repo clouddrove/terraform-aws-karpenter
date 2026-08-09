@@ -9,11 +9,11 @@ terraform {
     }
     helm = {
       source  = "hashicorp/helm"
-      version = ">= 2.0.0"
+      version = ">= 3.0.0"
     }
   }
 
   provider_meta "aws" {
-    module_name = "clouddrove/terraform-aws-karpenter"
+    user_agent = ["github.com/clouddrove/terraform-aws-karpenter"]
   }
 }

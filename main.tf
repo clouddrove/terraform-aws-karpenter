@@ -163,24 +163,24 @@ resource "helm_release" "karpenter" {
   count = var.enabled ? 1 : 0
 
   name             = "karpenter"
-  repository       = "https://charts.karpenter.sh"
+  repository       = "oci://public.ecr.aws/karpenter"
   chart            = "karpenter"
   version          = var.karpenter_version #
   namespace        = var.namespace
   create_namespace = var.create_namespace
 
-  set {
-    name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
-    value = join("", aws_iam_role.this[*].arn)
-  }
-
-  set {
-    name  = "controller.clusterName"
-    value = var.cluster_name
-  }
-
-  set {
-    name  = "controller.clusterEndpoint"
-    value = var.eks_cluster_endpoint
-  }
+  set = [
+    {
+      name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
+      value = join("", aws_iam_role.this[*].arn)
+    },
+    {
+      name  = "controller.clusterName"
+      value = var.cluster_name
+    },
+    {
+      name  = "controller.clusterEndpoint"
+      value = var.eks_cluster_endpoint
+    }
+  ]
 }
